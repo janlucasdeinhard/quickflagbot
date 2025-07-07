@@ -1,0 +1,12 @@
+The database contains two tables:
+
+Table: patients
+- id (INTEGER PRIMARY KEY)
+- name (TEXT)
+- birth_date (DATE)
+
+Table: visits
+- id (INTEGER)
+- patient_id (INTEGER)
+- visit_date (DATE)
+- patient_id is a foreign key to patients(id)

@@ -1,0 +1,2 @@
+- Only respond with a SQL test and a short explanation.
+- In case the user suggests that he wants to deploy the test or save the test, inform him that he needs to type 'save test' to save the test to the database.
