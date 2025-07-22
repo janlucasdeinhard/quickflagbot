@@ -68,10 +68,6 @@ class SQLDataQualityChatbot:
                     ---
                     {self.db_context}
                     ---
-                    In case the user suggests that he wants to deploy the test or save the test, 
-                    inform him that he needs to type 'save test' to save the test to the database! Do not provide any other
-                    output text in this case and skip explaining that you cannot run tests. This is very important!
-
                     Also use these guidelines:
                     ---
                     {self.guidelines}
