@@ -3,3 +3,5 @@ python-dotenv
 sqlglot
 flask
 pandas
+sqlite3
+
