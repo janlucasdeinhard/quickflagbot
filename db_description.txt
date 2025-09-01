@@ -1,12 +1,35 @@
-The database contains two tables:
 
-Table: patients
-- id (INTEGER PRIMARY KEY)
-- name (TEXT)
-- birth_date (DATE)
+-- Schema for table: accounts
+CREATE TABLE accounts (
+    account_id INTEGER PRIMARY KEY,
+    account_name TEXT NOT NULL,
+    industry TEXT,
+    region TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 
-Table: visits
-- id (INTEGER)
-- patient_id (INTEGER)
-- visit_date (DATE)
-- patient_id is a foreign key to patients(id)
+-- Schema for table: opportunities
+CREATE TABLE opportunities (
+    opportunity_id INTEGER PRIMARY KEY,
+    account_id INTEGER NOT NULL,
+    funnel_value REAL NOT NULL,
+    stage TEXT,
+    owner TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    expected_close TEXT,
+    FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+);
+
+-- Schema for table: transactions
+CREATE TABLE transactions (
+    account_id INTEGER NOT NULL,
+    opportunity_id INTEGER,
+    booking_date TEXT NOT NULL,
+    amount REAL NOT NULL,
+    currency TEXT,
+    channel TEXT,
+    product TEXT,
+    region TEXT,
+    FOREIGN KEY (account_id) REFERENCES accounts(account_id),
+    FOREIGN KEY (opportunity_id) REFERENCES opportunities(opportunity_id)
+);

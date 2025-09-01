@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template_string
 from chatbot import SQLDataQualityChatbot
 
+
+
 app = Flask(__name__)
 chatbot = SQLDataQualityChatbot()
 
