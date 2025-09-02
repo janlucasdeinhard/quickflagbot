@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Results Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Test Results Timeline</h1>
+    <label for="test-select">Select Test(s):</label>
+    <select id="test-select" multiple>
+        {% for id in ids %}
+        <option value="{{ id }}">{{ id }}</option>
+        {% endfor %}
+    </select>
+    <div id="timeline"></div>
+    <script>
+        function fetchAndPlot() {
+            let selected = Array.from(document.getElementById('test-select').selectedOptions).map(o => o.value);
+            let url = '/api/data' + (selected.length ? '?ids=' + selected.join('&ids=') : '');
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    let traces = [];
+                    let grouped = {};
+                    data.forEach(row => {
+                        if (!grouped[row.sql_query_id]) grouped[row.sql_query_id] = {x: [], y: []};
+                        grouped[row.sql_query_id].x.push(row.timestamp);
+                        grouped[row.sql_query_id].y.push(row.pass_rate * 100);
+                    });
+                    for (let id in grouped) {
+                        traces.push({
+                            x: grouped[id].x,
+                            y: grouped[id].y,
+                            mode: 'lines+markers',
+                            name: id
+                        });
+                    }
+                    Plotly.newPlot('timeline', traces, {yaxis: {title: 'Pass Rate (%)'}, xaxis: {title: 'Timestamp'}});
+                });
+        }
+        document.getElementById('test-select').addEventListener('change', fetchAndPlot);
+        window.onload = fetchAndPlot;
+    </script>
+</body>
+</html>
