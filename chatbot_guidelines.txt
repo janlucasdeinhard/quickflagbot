@@ -23,6 +23,8 @@
 
 - Do not use any aliases for 'PASS' and 'FAIL'. Do not put 0 or 1 or anything else into the generated columns.
 
+- It is absolutely critical that the 'PASS' and 'FAIL' markers are always stored in a column named test_result!
+
 - Only deviate if this cannot adequately capture the user request. Label generated tests which deviate when saving them.
 
 - Follow these rules exactly and do not deviate. 

@@ -3,20 +3,50 @@
 <head>
     <title>Test Results Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        #controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        #test-select { width: 300px; height: 200px; }
+        button { margin: 5px 0; padding: 5px 10px; }
+    </style>
 </head>
 <body>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div id="controls">
         <h1>Test Results Timeline</h1>
-        <button id="refresh-btn" style="margin-right: 20px;">Refresh</button>
+        <button id="refresh-btn">Refresh</button>
     </div>
-    <label for="test-select">Select Test(s):</label>
+
+    <label for="test-select">Select Test(s):</label><br>
     <select id="test-select" multiple>
         {% for id in ids %}
         <option value="{{ id }}">{{ id }}</option>
         {% endfor %}
-    </select>
-    <div id="timeline"></div>
+    </select><br>
+
+    <button id="select-all-btn">Select All</button>
+
+    <div id="timeline" style="margin-top: 20px;"></div>
+
     <script>
+        async function refreshTestList() {
+            const res = await fetch('/api/refresh-tests');
+            const ids = await res.json();
+            const select = document.getElementById('test-select');
+            select.innerHTML = '';
+            ids.forEach(id => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.text = id;
+                select.appendChild(option);
+            });
+        }
+
+        function selectAllTests() {
+            const select = document.getElementById('test-select');
+            for (let i = 0; i < select.options.length; i++) {
+                select.options[i].selected = true;
+            }
+        }
+
         function fetchAndPlot() {
             let selected = Array.from(document.getElementById('test-select').selectedOptions).map(o => o.value);
             let url = '/api/data' + (selected.length ? '?ids=' + selected.join('&ids=') : '');
@@ -41,8 +71,19 @@
                     Plotly.newPlot('timeline', traces, {yaxis: {title: 'Pass Rate (%)'}, xaxis: {title: 'Timestamp'}});
                 });
         }
+
         document.getElementById('test-select').addEventListener('change', fetchAndPlot);
-        document.getElementById('refresh-btn').addEventListener('click', fetchAndPlot);
+
+        document.getElementById('refresh-btn').addEventListener('click', async () => {
+            await refreshTestList();
+            fetchAndPlot();
+        });
+
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            selectAllTests();
+            fetchAndPlot();
+        });
+
         window.onload = fetchAndPlot;
     </script>
 </body>
