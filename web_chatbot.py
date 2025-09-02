@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template_string
 from chatbot import SQLDataQualityChatbot
-
-
+from datetime import datetime
 
 app = Flask(__name__)
 chatbot = SQLDataQualityChatbot()
@@ -35,6 +34,7 @@ HTML_PAGE = """
         const messages = document.getElementById('messages');
         const input = document.getElementById('input');
         const send = document.getElementById('send');
+
         function appendMessage(role, text) {
             const div = document.createElement('div');
             div.className = role;
@@ -45,21 +45,17 @@ HTML_PAGE = """
                 let match;
                 let html = '';
                 while ((match = sqlRegex.exec(text)) !== null) {
-                    // Add any text before the code block
                     if (match.index > lastIndex) {
                         let before = text.slice(lastIndex, match.index).trim();
                         if (before) {
-                            // Format lists and paragraphs
                             before = before.replace(/\\n\\n+/g, '</p><p>');
                             before = before.replace(/(^|\\n)- (.*)/g, '<ul><li>$2</li></ul>');
                             html += '<div><p>' + before + '</p></div>';
                         }
                     }
-                    // Add formatted SQL block
                     html += `<pre class='sql'><code class='sql'>${match[1].trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
                     lastIndex = sqlRegex.lastIndex;
                 }
-                // Add any remaining text after last code block
                 if (lastIndex < text.length) {
                     let after = text.slice(lastIndex).trim();
                     if (after) {
@@ -75,6 +71,7 @@ HTML_PAGE = """
             messages.appendChild(div);
             messages.scrollTop = messages.scrollHeight;
         }
+
         send.onclick = function() {
             const msg = input.value.trim();
             if (!msg) return;
@@ -88,8 +85,25 @@ HTML_PAGE = """
             .then(res => res.json())
             .then(data => {
                 appendMessage('assistant', data.response);
+
+                // 🔑 Prompt user for rule name if chatbot triggers it
+                if (data.response.includes("__ASK_RULE_NAME__")) {
+                    const ruleName = prompt("Enter a name for your rule:");
+                    if (ruleName) {
+                        fetch('/save-rule', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ rule_name: ruleName })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            appendMessage('assistant', `✅ Rule saved as: ${data.rule_name}`);
+                        });
+                    }
+                }
             });
         };
+
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') send.click();
         });
@@ -108,5 +122,29 @@ def chat():
     response = chatbot.send_message(user_input)
     return jsonify({"response": response})
 
+#@app.route("/save-rule", methods=["POST"])
+#def save_rule():
+#    data = request.json
+#    rule_name = data.get("rule_name")
+#    print(f"✅ User defined rule: {rule_name}")
+#    # Here you could integrate it into chatbot logic or save it to disk
+#    return jsonify({"rule_name": rule_name})
+
+@app.route("/save-rule", methods=["POST"])
+def save_rule():
+    data = request.json
+    rule_name_plain = data.get("rule_name")
+    rule_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{rule_name_plain}.sql"
+
+    if chatbot.last_sql_candidate:
+        filepath = chatbot.save_test_to_file(chatbot.last_sql_candidate, rule_name)
+        chatbot.last_sql_candidate = None  # clear after saving
+        return jsonify({"rule_name": rule_name, "filepath": filepath})
+    else:
+        return jsonify({"error": "No SQL test available to save"}), 400
+
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(
+        port=5002,
+        debug=False
+    )

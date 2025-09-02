@@ -5,7 +5,10 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <h1>Test Results Timeline</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Test Results Timeline</h1>
+        <button id="refresh-btn" style="margin-right: 20px;">Refresh</button>
+    </div>
     <label for="test-select">Select Test(s):</label>
     <select id="test-select" multiple>
         {% for id in ids %}
@@ -39,6 +42,7 @@
                 });
         }
         document.getElementById('test-select').addEventListener('change', fetchAndPlot);
+        document.getElementById('refresh-btn').addEventListener('click', fetchAndPlot);
         window.onload = fetchAndPlot;
     </script>
 </body>

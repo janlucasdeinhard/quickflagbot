@@ -1,6 +1,5 @@
 from openai import OpenAI
 from dotenv import load_dotenv
-from datetime import datetime
 import sqlglot
 from sqlglot.errors import ParseError
 import os
@@ -40,9 +39,12 @@ class SQLDataQualityChatbot:
 
         # SQL extraction command template
         self.extract_command = """
-    Please take the following chat history which is ordered by time of occurrence and extract the SQL test command which you think
-    the user most likely want to deploy. Return only this SQL in plain text without any surrounding text. The chat history is as follows: {0}
-"""
+            Please take the following chat history which is ordered by time of occurrence and extract the SQL test command which you think
+            the user most likely want to deploy. Return only this SQL in plain text without any surrounding text. The chat history is as follows: {0}
+        """
+
+        # State variables
+        self.last_sql_candidate = ""
 
         # Initialize conversation
         self.reset_conversation()
@@ -77,23 +79,29 @@ class SQLDataQualityChatbot:
         ]
         self.last_assistant_reply = ""
 
-    def save_test_to_file(self, test_sql, description):
-        """Save a SQL test to a file with timestamp."""
-        if not self.test_folder_path:
-            raise ValueError("TEST_FOLDER_PATH not configured")
+    #def save_test_to_file(self, test_sql, description):
+    #    """Save a SQL test to a file with timestamp."""
+    #    if not self.test_folder_path:
+    #        raise ValueError("TEST_FOLDER_PATH not configured")
+    #
+    #    # Create directory if it doesn't exist
+    #    os.makedirs(self.test_folder_path, exist_ok=True)
+    #
+    #    # Create a safe filename
+    #    slug = re.sub(r"\W+", "_", description.lower())[:50]
+    #    filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{slug}.sql"
+    #    filepath = os.path.join(self.test_folder_path, filename)
+    #
+    #    with open(filepath, "w") as f:
+    #        f.write(f"-- Test: {description}\n\n{test_sql.strip()}\n")
+    #
+    #    print(f"✅ Test saved to {filepath}")
+    #    return filepath
 
-        # Create directory if it doesn't exist
-        os.makedirs(self.test_folder_path, exist_ok=True)
-
-        # Create a safe filename
-        slug = re.sub(r"\W+", "_", description.lower())[:50]
-        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{slug}.sql"
-        filepath = os.path.join(self.test_folder_path, filename)
-
+    def save_test_to_file(self, sql: str, rule_name: str) -> str:
+        filepath = f"tests/generated/{rule_name}.sql"
         with open(filepath, "w") as f:
-            f.write(f"-- Test: {description}\n\n{test_sql.strip()}\n")
-
-        print(f"✅ Test saved to {filepath}")
+            f.write(sql)
         return filepath
 
     def extract_sql_from_response(self, text):
@@ -120,8 +128,10 @@ class SQLDataQualityChatbot:
             )
             try:
                 sqlglot.parse_one(sql_candidate)
-                filepath = self.save_test_to_file(sql_candidate, "save test")
-                return f"Test saved to {filepath}"
+                #filepath = self.save_test_to_file(sql_candidate, "save test")
+                #return f"Test saved to {filepath}"
+                self.last_sql_candidate = sql_candidate
+                return "__ASK_RULE_NAME__"
             except ParseError:
                 return "No previous test to save. Please generate a test first."
 
