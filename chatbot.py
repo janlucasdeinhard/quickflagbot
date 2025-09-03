@@ -4,6 +4,7 @@ import sqlglot
 from sqlglot.errors import ParseError
 import os
 import re
+import subprocess
 
 
 class SQLDataQualityChatbot:
@@ -99,9 +100,10 @@ class SQLDataQualityChatbot:
     #    return filepath
 
     def save_test_to_file(self, sql: str, rule_name: str) -> str:
-        filepath = f"tests/generated/{rule_name}.sql"
+        filepath = f'tests/generated/{rule_name}.sql'
         with open(filepath, "w") as f:
             f.write(sql)
+        subprocess.run(['python','run_all_tests_scheduled.py'])
         return filepath
 
     def extract_sql_from_response(self, text):
